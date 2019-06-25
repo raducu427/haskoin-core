@@ -16,6 +16,7 @@ module Network.Haskoin.Script.Common
     , Script(..)
     , PushDataType(..)
     , ScriptOutput(..)
+    , ScriptOutputNonStd(..)
     , isPayPK
     , isPayPKHash
     , isPayMulSig
@@ -27,12 +28,18 @@ module Network.Haskoin.Script.Common
     , encodeOutputBS
     , decodeOutput
     , decodeOutputBS
+    , encodeOutput'
+    , encodeOutputBS'
+    , decodeOutput'
+    , decodeOutputBS'
     , toP2SH
     , toP2WSH
     , isPushOp
     , opPushData
     , intToScriptOp
     , scriptOpToInt
+    , isPushData
+    , getData
     ) where
 
 import           Control.Monad
@@ -610,6 +617,29 @@ data ScriptOutput
     | DataCarrier { getOutputData :: !ByteString }
     deriving (Eq, Show, Read, Generic, Hashable)
 
+data ScriptOutputNonStd
+      -- | pay to public key
+    = PayPKNonStd { getOutputPubKeyNonStd :: !PubKeyI }
+      -- | pay to public key hash
+    | PayPKHashNonStd { getOutputHashNonStd :: !Hash160 }
+      -- | multisig
+    | PayMulSigNonStd { getOutputMulSigKeysNonStd     :: ![PubKeyI]
+                      , getOutputMulSigRequiredNonStd :: !Int }
+      -- | pay to a script hash
+    | PayScriptHashNonStd { getOutputHashNonStd :: !Hash160 }
+      -- | pay to a script hash nonstandard
+    | PayScriptHashRedeemNonStd { getInputRawNonStd :: ![ByteString]
+                                , getOutputHashRedeemNonStd :: ![Hash160]
+                                , getPayScriptHashKeyNonStd :: !PubKeyI}
+      -- | pay to witness public key hash
+    | PayWitnessPKHashNonStd { getOutputHashNonStd :: !Hash160 }
+      -- | pay to witness script hash
+    | PayWitnessScriptHashNonStd { getScriptHashNonStd :: !Hash256 }
+      -- | provably unspendable data carrier
+    | DataCarrierNonStd { getOutputDataNonStd :: !ByteString }
+    deriving (Eq, Show, Read, Generic, Hashable)
+
+
 instance FromJSON ScriptOutput where
     parseJSON = withText "scriptoutput" $ \t -> either fail return $
         maybeToEither "scriptoutput not hex" (decodeHex t) >>=
@@ -674,9 +704,37 @@ decodeOutput s = case scriptOps s of
     -- Pay to MultiSig Keys
     _ -> matchPayMulSig s
 
+decodeOutput' :: [ByteString] -> Script -> Either String ScriptOutputNonStd
+decodeOutput' bss s = case scriptOps s of
+    -- Pay to PubKey
+    [OP_PUSHDATA bs _, OP_CHECKSIG] -> PayPKNonStd <$> S.decode bs
+    -- Pay to PubKey Hash
+    [OP_DUP, OP_HASH160, OP_PUSHDATA bs _, OP_EQUALVERIFY, OP_CHECKSIG] ->
+        PayPKHashNonStd <$> S.decode bs
+    -- Pay to Script Hash
+    [OP_HASH160, OP_PUSHDATA bs _, OP_EQUAL] ->
+        PayScriptHashNonStd <$> S.decode  bs
+    -- Pay to Witness
+    (OP_HASH160 : OP_PUSHDATA _ _ : OP_EQUALVERIFY : _) ->
+        let l = filter isPushData $ scriptOps s
+        in PayScriptHashRedeemNonStd <$>
+           Right bss <*>
+           sequenceA (fmap (S.decode . getData) (init l)) <*>
+           (S.decode . getData) (last l)
+    [OP_0, OP_PUSHDATA bs OPCODE]
+      | B.length bs == 20 -> PayWitnessPKHashNonStd     <$> S.decode bs
+      | B.length bs == 32 -> PayWitnessScriptHashNonStd <$> S.decode bs
+    -- Provably unspendable data carrier output
+    [OP_RETURN, OP_PUSHDATA bs _] -> Right $ DataCarrierNonStd bs
+    -- Pay to MultiSig Keys
+    _ -> matchPayMulSig' s
+
 -- | Similar to 'decodeOutput' but decodes from a 'ByteString'.
 decodeOutputBS :: ByteString -> Either String ScriptOutput
 decodeOutputBS = decodeOutput <=< S.decode
+
+decodeOutputBS' :: [ByteString] -> ByteString -> Either String ScriptOutputNonStd
+decodeOutputBS' bss = decodeOutput' bss <=< S.decode
 
 -- | Computes a 'Script' from a standard 'ScriptOutput'.
 encodeOutput :: ScriptOutput -> Script
@@ -705,9 +763,40 @@ encodeOutput s = Script $ case s of
     -- Provably unspendable output
     (DataCarrier d) -> [OP_RETURN, opPushData d]
 
+encodeOutput' :: ScriptOutputNonStd -> Script
+encodeOutput' s = Script $ case s of
+    -- Pay to PubKey
+    (PayPKNonStd k) -> [opPushData $ S.encode k, OP_CHECKSIG]
+    -- Pay to PubKey Hash Address
+    (PayPKHashNonStd h) ->
+        [ OP_DUP, OP_HASH160, opPushData $ S.encode h, OP_EQUALVERIFY, OP_CHECKSIG]
+    -- Pay to MultiSig Keys
+    (PayMulSigNonStd ps r)
+      | r <= length ps ->
+        let opM = intToScriptOp r
+            opN = intToScriptOp $ length ps
+            keys = map (opPushData . S.encode) ps
+            in opM : keys ++ [opN, OP_CHECKMULTISIG]
+      | otherwise -> error "encodeOutput: PayMulSig r must be <= than pkeys"
+    -- Pay to Script Hash Address
+    (PayScriptHashNonStd h) ->
+        [ OP_HASH160, opPushData $ S.encode h, OP_EQUAL]
+    -- Pay to Script Hash Address nonstandard
+    (PayScriptHashRedeemNonStd  _ hs pub) -> scriptOps $ getRedeemScript pub hs
+    -- Pay to Witness PubKey Hash Address
+    (PayWitnessPKHashNonStd h) ->
+        [ OP_0, opPushData $ S.encode h ]
+    (PayWitnessScriptHashNonStd h) ->
+        [ OP_0, opPushData $ S.encode h ]
+    -- Provably unspendable output
+    (DataCarrierNonStd d) -> [OP_RETURN, opPushData d]
+
 -- | Similar to 'encodeOutput' but encodes to a ByteString
 encodeOutputBS :: ScriptOutput -> ByteString
 encodeOutputBS = S.encode . encodeOutput
+
+encodeOutputBS' :: ScriptOutputNonStd -> ByteString
+encodeOutputBS' = S.encode . encodeOutput'
 
 -- | Encode script as pay-to-script-hash script
 toP2SH :: Script -> ScriptOutput
@@ -730,3 +819,31 @@ matchPayMulSig (Script ops) = case splitAt (length ops - 2) ops of
     go (OP_PUSHDATA bs _:xs) = liftM2 (:) (S.decode bs) (go xs)
     go []                    = return []
     go  _                    = Left "matchPayMulSig: invalid multisig opcode"
+
+matchPayMulSig' :: Script -> Either String ScriptOutputNonStd
+matchPayMulSig' (Script ops) = case splitAt (length ops - 2) ops of
+    (m:xs,[n,OP_CHECKMULTISIG]) -> do
+        (intM,intN) <- liftM2 (,) (scriptOpToInt m) (scriptOpToInt n)
+        if intM <= intN && length xs == intN
+            then liftM2 PayMulSigNonStd (go xs) (return intM)
+            else Left "matchPayMulSig: Invalid M or N parameters"
+    _ -> Left "matchPayMulSig: script did not match output template"
+  where
+    go (OP_PUSHDATA bs _:xs) = liftM2 (:) (S.decode bs) (go xs)
+    go []                    = return []
+    go  _                    = Left "matchPayMulSig: invalid multisig opcode"
+
+isPushData :: ScriptOp -> Bool
+isPushData (OP_PUSHDATA _ _) = True
+isPushData _                 = False
+
+getData :: ScriptOp -> ByteString
+getData (OP_PUSHDATA bs _) = bs
+getData _                  = B.empty
+
+getRedeemScript :: PubKeyI -> [Hash160] -> Script
+getRedeemScript pub hs = Script $
+ concat (fmap (\bs -> [OP_HASH160, opPushData bs, OP_EQUALVERIFY]) $ reverse (S.encode <$> hs)) <>
+                      [opPushData (S.encode pub), OP_CHECKSIG]
+  -- where
+  --   pubKey = exportPubKey (pubKeyCompressed pub) (pubKeyPoint pub)
