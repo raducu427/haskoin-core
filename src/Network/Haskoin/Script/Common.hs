@@ -40,6 +40,7 @@ module Network.Haskoin.Script.Common
     , scriptOpToInt
     , isPushData
     , getData
+    , getRedeemScript
     ) where
 
 import           Control.Monad
@@ -845,5 +846,3 @@ getRedeemScript :: PubKeyI -> [Hash160] -> Script
 getRedeemScript pub hs = Script $
  concat (fmap (\bs -> [OP_HASH160, opPushData bs, OP_EQUALVERIFY]) $ reverse (S.encode <$> hs)) <>
                       [opPushData (S.encode pub), OP_CHECKSIG]
-  -- where
-  --   pubKey = exportPubKey (pubKeyCompressed pub) (pubKeyPoint pub)
