@@ -19,6 +19,9 @@ module Network.Haskoin.Constants
     , bch
     , bchTest
     , bchRegTest
+    , ltc
+    , ltcTest
+    , ltcRegTest
     , allNets
     , netByName
     , netByIdent
