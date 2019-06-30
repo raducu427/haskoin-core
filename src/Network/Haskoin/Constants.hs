@@ -533,6 +533,209 @@ bchRegTest =
     , getHalvingInterval = 150
     }
 
+-- | Litecoin SegWit network. Symbol: LTC.
+ltc :: Network
+ltc =
+    Network
+    { getNetworkName = "ltc"
+    , getNetworkIdent = "ltc"
+    , getAddrPrefix = 30
+    , getScriptPrefix = 48
+    -- , getScriptPrefix = 50  -- new
+    , getSecretPrefix = 176
+    , getExtPubKeyPrefix = 0x0488b21e
+    , getExtSecretPrefix = 0x0488ade4
+    , getNetworkMagic = 0xfbc0b6db
+    , getGenesisHeader =
+          BlockHeader
+              0x01
+              "12a765e31ffd4059bada1e25190f6e98c99d9714d334efa41a195a7e7e04bfe2"
+              "97ddfbbae6be97fd6cdf3e7ca13232a3afff2353e29badfab7f73011edd4ced9"
+              1231006505
+              0x1e0ffff0
+              2083236893
+    , getMaxBlockSize = 1000000
+    , getMaxSatoshi = 8400000000000000
+    , getHaskoinUserAgent =
+          "/haskoin-ltc:" <> versionString <> "/"
+    , getDefaultPort = 9333
+    , getAllowMinDifficultyBlocks = False
+    , getPowNoRetargetting = False
+    , getPowLimit =
+          0x00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    , getBip34Block =
+          ( 710000
+          , "fa09d204a83a768ed5a7c8d441fa62f2043abf420cff1226c7b4329aeb9d51cf")
+    , getBip65Height = 918684
+    , getBip66Height = 811879
+    , getTargetTimespan = 3 * 24 * 60 * 60 + 12 * 60 * 60
+    , getTargetSpacing = 2 * 60 + 30
+    , getCheckpoints =
+          [ ( 1500
+            , "841a2965955dd288cfa707a755d05a54e45f8bd476835ec9af4402a2b59a2967")
+          , ( 4032
+            , "9ce90e427198fc0ef05e5905ce3503725b80e26afd35a987965fd7e3d9cf0846")
+          , ( 8064
+            , "eb984353fc5190f210651f150c40b8a4bab9eeeff0b729fcb3987da694430d70")
+          , ( 16128
+            , "602edf1859b7f9a6af809f1d9b0e6cb66fdc1d4d9dcd7a4bec03e12a1ccd153d")
+          , ( 23420
+            , "d80fdf9ca81afd0bd2b2a90ac3a9fe547da58f2530ec874e978fce0b5101b507")
+          , ( 50000
+            , "69dc37eb029b68f075a5012dcc0419c127672adb4f3a32882b2b3e71d07a20a6")
+          , ( 80000
+            , "4fcb7c02f676a300503f49c764a89955a8f920b46a8cbecb4867182ecdb2e90a")
+          , ( 120000
+            , "bd9d26924f05f6daa7f0155f32828ec89e8e29cee9e7121b026a7a3552ac6131")
+          , ( 161500
+            , "dbe89880474f4bb4f75c227c77ba1cdc024991123b28b8418dbbf7798471ff43")
+          , ( 179620
+            , "2ad9c65c990ac00426d18e446e0fd7be2ffa69e9a7dcb28358a50b2b78b9f709")
+          , ( 240000
+            , "7140d1c4b4c2157ca217ee7636f24c9c73db39c4590c4e6eab2e3ea1555088aa")
+          , ( 383640
+            , "2b6809f094a9215bafc65eb3f110a35127a34be94b7d0590a096c3f126c6f364")
+          , ( 409004
+            , "487518d663d9f1fa08611d9395ad74d982b667fbdc0e77e9cf39b4f1355908a3")
+          , ( 456000
+            , "bf34f71cc6366cd487930d06be22f897e34ca6a40501ac7d401be32456372004")
+          , ( 638902
+            , "15238656e8ec63d28de29a8c75fcf3a5819afc953dcd9cc45cecc53baec74f38")
+          , ( 721000
+            , "198a7b4de1df9478e2463bd99d75b714eab235a2e63e741641dc8a759a9840e5")
+          ]
+    , getSeeds =
+          [ "seed-a.litecoin.loshan.co.uk"
+          , "dnsseed.thrasher.io"
+          , "dnsseed.litecointools.com"
+          , "dnsseed.litecoinpool.org"
+          , "dnsseed.koin-project.com"
+          ]
+    , getBip44Coin = 2
+    , getSigHashForkId = Nothing
+    , getEdaBlockHeight = Nothing
+    , getDaaBlockHeight = Nothing
+    , getSegWit = True
+    , getCashAddrPrefix = Nothing
+    , getBech32Prefix = Just "ltc"
+    , getReplaceByFee = False
+    , getHalvingInterval = 840000
+    }
+
+
+-- | Testnet for Litecoin SegWit network.
+ltcTest :: Network
+ltcTest =
+    Network
+    { getNetworkName = "ltcTest"
+    , getNetworkIdent = "ltcTest"
+    , getAddrPrefix = 111
+    , getScriptPrefix = 196
+    -- , getScriptPrefix = 58  -- new
+    , getSecretPrefix = 239
+    , getExtPubKeyPrefix = 0x043587cf
+    , getExtSecretPrefix = 0x04358394
+    , getNetworkMagic = 0xfabfb5da
+    , getGenesisHeader =
+          BlockHeader
+              0x01
+              "530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9"
+              "97ddfbbae6be97fd6cdf3e7ca13232a3afff2353e29badfab7f73011edd4ced9"
+              1486949366
+              0x207fffff
+              293345
+    , getMaxBlockSize = 1000000
+    , getMaxSatoshi = 8400000000000000
+    , getHaskoinUserAgent =
+          "/haskoin-ltcTest:" <> versionString <> "/"
+    , getDefaultPort = 19335
+    , getAllowMinDifficultyBlocks = True
+    , getPowNoRetargetting = False
+    , getPowLimit =
+          0x00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    , getBip34Block =
+          ( 76
+          , "8075c771ed8b495ffd943980a95f702ab34fce3c8c54e379548bda33cc8c0573")
+    , getBip65Height = 76
+    , getBip66Height = 76
+    , getTargetTimespan = 3 * 24 * 60 * 60 + 12 * 60 * 60
+    , getTargetSpacing = 2 * 60 + 30
+    , getCheckpoints =
+          [ ( 2056
+            , "17748a31ba97afdc9a4f86837a39d287e3e7c7290a08a1d816c5969c78a83289")
+
+          ]
+    , getSeeds =
+          [ "testnet-seed.litecointools.com"
+          , "seed-b.litecoin.loshan.co.uk"
+          , "dnsseed-testnet.thrasher.io"
+          ]
+    , getBip44Coin = 2
+    , getSigHashForkId = Nothing
+    , getEdaBlockHeight = Nothing
+    , getDaaBlockHeight = Nothing
+    , getSegWit = True
+    , getCashAddrPrefix = Nothing
+    , getBech32Prefix = Just "tltc"
+    , getReplaceByFee = True
+    , getHalvingInterval = 840000
+    }
+
+-- | Regression testnet for Litecoin SegWit network.
+ltcRegTest :: Network
+ltcRegTest =
+    Network
+    { getNetworkName = "ltcReg"
+    , getNetworkIdent = "ltcRegTest"
+    , getAddrPrefix = 111
+    , getScriptPrefix = 196
+    -- , getScriptPrefix = 58  -- new
+    , getSecretPrefix = 239
+    , getExtPubKeyPrefix = 0x043587cf
+    , getExtSecretPrefix = 0x04358394
+    , getNetworkMagic = 0xfabfb5da
+    , getGenesisHeader =
+          BlockHeader
+              0x01
+              "530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9"
+              "97ddfbbae6be97fd6cdf3e7ca13232a3afff2353e29badfab7f73011edd4ced9"
+              1296688602
+              0x207fffff
+              0
+    , getMaxBlockSize = 1000000
+    , getMaxSatoshi = 8400000000000000
+    , getHaskoinUserAgent =
+          "/haskoin-ltcRegTest:" <> versionString <> "/"
+    , getDefaultPort = 19444
+    , getAllowMinDifficultyBlocks = True
+    , getPowNoRetargetting = True
+    , getPowLimit =
+          0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    , getBip34Block =
+          ( 100000000
+          , "")
+    , getBip65Height = 1351
+    , getBip66Height = 1251
+    , getTargetTimespan = 3 * 24 * 60 * 60 + 12 * 60 * 60
+    , getTargetSpacing = 2 * 60 + 30
+    , getCheckpoints =
+          [ ( 0
+            , "530827f38f93b43ed12af0b3ad25a288dc02ed74d6d7857862df51fc56c416f9")
+
+          ]
+    , getSeeds = []
+    , getBip44Coin = 2
+    , getSigHashForkId = Nothing
+    , getEdaBlockHeight = Nothing
+    , getDaaBlockHeight = Nothing
+    , getSegWit = True
+    , getCashAddrPrefix = Nothing
+    , getBech32Prefix = Just "rltc"
+    , getReplaceByFee = True
+    , getHalvingInterval = 150
+    }
+
+
 -- | List of all networks supported by this library.
 allNets :: [Network]
-allNets = [btc, bch, btcTest, bchTest, btcRegTest, bchRegTest]
+allNets = [btc, bch, btcTest, bchTest, btcRegTest, bchRegTest, ltc, ltcTest, ltcRegTest]
